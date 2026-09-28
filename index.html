@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uso de IA en estudiantes de programación · Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#121212;--card:#1E1E1E;--line:#2C2C31;--tx:#ECEEF3;--mut:#9AA1B2;--c:#4D8DFF}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:400 14.5px/1.6 Sora,system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 64px}
+header{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:flex-end;margin-bottom:22px}
+h1{font-size:clamp(1.6rem,3.4vw,2.4rem);line-height:1.15;margin:0 0 6px;font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.25rem;margin:34px 0 14px;font-weight:800}
+h3{font-size:1rem;margin:0 0 14px;font-weight:600;line-height:1.4}
+.sub,.mut{color:var(--mut);margin:0;font-size:.9rem}
+.act{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+button{font:600 .9rem Sora,sans-serif;cursor:pointer}
+button:focus-visible{outline:2px solid #fff;outline-offset:3px}
+#refresh{color:#06140d;background:#39FF88;border:0;border-radius:10px;padding:10px 18px;box-shadow:0 0 18px -4px #39FF88}
+#refresh:disabled{opacity:.55;cursor:wait}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.tab{text-align:left;color:var(--tx);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;transition:box-shadow .25s,border-color .25s}
+.tab b{font-size:1.05rem;color:var(--c)}
+.tab span{font-size:.82rem;color:var(--mut)}
+.tab.on{border-color:var(--c);box-shadow:0 0 20px -4px var(--c),inset 0 0 14px -8px var(--c)}
+.info{margin-top:14px;border-color:var(--c);box-shadow:0 0 22px -12px var(--c)}
+.info h3{color:var(--c);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{background:#25252B;border:1px solid var(--line);border-radius:99px;padding:3px 12px;font-size:.82rem}
+.chip b{color:var(--c)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:14px}
+.kpi b{display:block;font-size:2.1rem;font-weight:800;line-height:1.15;text-shadow:0 0 16px currentColor}
+.kpi:nth-child(1) b{color:#00E5FF}.kpi:nth-child(2) b{color:#B65CFF}.kpi:nth-child(3) b{color:#39FF88}.kpi:nth-child(4) b{color:#FFD84D}
+.kpi span{color:var(--mut);font-size:.85rem}
+.bar{height:8px;background:#2A2A30;border-radius:9px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;width:0;background:#FFD84D;box-shadow:0 0 10px #FFD84D;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.load{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.eq{display:flex;align-items:flex-end;gap:4px;height:34px}
+.eq i{width:6px;height:8px;border-radius:3px;background:#39FF88;box-shadow:0 0 8px #39FF88;animation:eq 1s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:.12s;background:#00E5FF;box-shadow:0 0 8px #00E5FF}.eq i:nth-child(3){animation-delay:.24s;background:#B65CFF;box-shadow:0 0 8px #B65CFF}
+.eq i:nth-child(4){animation-delay:.36s}.eq i:nth-child(5){animation-delay:.48s;background:#00E5FF;box-shadow:0 0 8px #00E5FF}
+@keyframes eq{0%,100%{height:8px}50%{height:34px}}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+.wide{grid-column:1/-1}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:22px}
+.cv{position:relative;height:230px}
+.legend{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:4px;font-size:.88rem}
+.legend li{display:flex;align-items:center;gap:8px}
+.legend i{width:11px;height:11px;border-radius:3px;flex:none;box-shadow:0 0 8px currentColor}
+.legend em{margin-left:auto;font-style:normal;color:var(--mut)}
+.scroll{max-height:330px;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-right:6px;margin-top:10px}
+.note{background:#25252B;border-left:3px solid #39FF88;padding:9px 12px;border-radius:8px;font-size:.9rem;overflow-wrap:anywhere}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.gal figure{margin:0}
+.gal img,.gal video{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;border-radius:10px;background:#000;border:1px solid var(--line)}
+.gal video{object-fit:contain}
+.gal figcaption{font-size:.85rem;color:var(--mut);margin-top:6px}
+.err{border-color:#7a3340;color:#ffb3bf;margin-bottom:14px}
+footer{margin-top:44px;color:var(--mut);font-size:.8rem}
+@media(max-width:760px){.split{grid-template-columns:1fr}.act{align-items:flex-start}}
+@media(prefers-reduced-motion:reduce){.bar i{transition:none}.eq i{animation:none;height:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Uso de IA en estudiantes de programación</h1>
+      <p class="sub">Encuesta a estudiantes de UMSA, UPEA y UNIFRANZ · datos en vivo</p>
+    </div>
+    <div class="act">
+      <button id="refresh" type="button">Actualizar datos</button>
+      <span class="mut" id="status" role="status" aria-live="polite">Cargando…</span>
+    </div>
+  </header>
+
+  <div id="loader" class="card load"><div class="eq"><i></i><i></i><i></i><i></i><i></i></div><span>Cargando encuestas…</span></div>
+  <div id="error" class="card err" hidden></div>
+
+  <nav class="tabs" id="tabs" aria-label="Seleccionar universidad"></nav>
+  <section class="card info" id="info" aria-live="polite"></section>
+
+  <section class="kpis" aria-label="Indicadores clave">
+    <div class="card kpi"><b id="k-pob">—</b><span>Población anual de ingreso</span></div>
+    <div class="card kpi"><b id="k-meta">—</b><span id="k-meta-l">Muestra objetivo</span></div>
+    <div class="card kpi"><b id="k-enc">—</b><span>Encuestas completadas</span></div>
+    <div class="card kpi"><b id="k-pct">—</b><span>Avance sobre la muestra</span><div class="bar"><i id="k-bar"></i></div></div>
+  </section>
+
+  <h2 id="qh">Resultados por pregunta</h2>
+  <div class="grid" id="qs"></div>
+
+  <h2>Evidencias del trabajo de campo</h2>
+  <div class="gal" id="gallery"></div>
+
+  <footer>Los datos se leen directamente de Google Apps Script cada vez que se actualiza.</footer>
+</div>
+
+<script>
+/* ===== CONFIGURACIÓN: edita solo esta sección ===== */
+const CONFIG = {
+  API_URL: "https://script.google.com/macros/s/AKfycbxMSGuVGeiPD1IB8D5-lOLcri1OFNHs0gTtJ_LT_UrKaW5KySvEOFwa0xSoqJwVVPyWmA/exec",
+  MUESTRA_PCT: 0.06,
+  UNIS: {
+    TODAS:    { nombre: "Todas", completo: "Todas las universidades", carrera: "UMSA + UPEA + UNIFRANZ + otras", color: "#4D8DFF" },
+    UMSA:     { nombre: "UMSA", completo: "Universidad Mayor de San Andrés", carrera: "Carrera de Informática", color: "#00E5FF", poblacion: 723,
+                semestres: [["I/2026", 490], ["II/2026", 233]],
+                fuente: "Ingreso anual promedio, datos del director de carrera." },
+    UPEA:     { nombre: "UPEA", completo: "Universidad Pública de El Alto", carrera: "Ingeniería de Sistemas", color: "#B65CFF", poblacion: 750,
+                semestres: [["1er semestre", 508, true], ["2do semestre", 242, true]],
+                fuente: "Estimado a partir de 3,000 ingresantes proyectados en los últimos 4 años." },
+    UNIFRANZ: { nombre: "UNIFRANZ", completo: "Universidad Privada Franz Tamayo", carrera: "Ingeniería de Sistemas e Innovación Digital · sede El Alto", color: "#39FF88", poblacion: 150,
+                semestres: [["1er semestre", 102, true], ["2do semestre", 48, true]],
+                fuente: "Estimación con reportes institucionales; no hubo acceso al Kardex." },
+    OTROS:    { nombre: "Otros", completo: "Otras universidades", carrera: "Sin población de referencia", color: "#FFD84D" }
+  },
+  // Respuestas semi-abiertas que cuentan como "NO" (texto normalizado, sin tildes)
+  NO_REGEX: /^(no|n\/a|ninguno|b|opcion b)?$/,
+  MEDIA: [
+    { tipo: "imagen", src: "media/upea.jpg", titulo: "UPEA · ingreso principal" },
+    { tipo: "imagen", src: "media/unifranz.jpg", titulo: "UNIFRANZ · acceso principal", pos: "50% 18%" },
+    { tipo: "imagen", src: "media/campo-1.jpg", titulo: "Encuesta presencial a una estudiante" },
+    { tipo: "imagen", src: "media/campo-2.jpg", titulo: "Encuesta digital desde el celular", pos: "50% 28%" },
+    { tipo: "video", src: "media/campo-video.mp4", titulo: "Trabajo de campo" }
+  ],
+  META_REGEX: /^\s*(marca temporal|timestamp|fecha|hora\b|correo|e-?mail|nombre|tel[eé]fono|celular|whatsapp)/i,
+  MAX_OPCIONES: 10
+};
+
+const PAL = ["#00E5FF","#B65CFF","#39FF88","#4D8DFF","#FF4FA3","#FFD84D","#FF9F43","#C6FF3D","#7CFFF0","#E0A8FF"];
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const nf = new Intl.NumberFormat("es-BO");
+const $ = s => document.querySelector(s);
+const S = { all: [], qCols: [], uniCol: null, q11: null, q15: null, by: {}, sel: "TODAS" };
+let charts = [];
+
+/* Brillo neón en barras y sectores */
+Chart.register({ id: "glow", beforeDatasetDraw(c, a) {
+  a.meta.data.forEach(el => {
+    if (el._g) return; el._g = 1;
+    const d = el.draw.bind(el);
+    el.draw = (...p) => { const x = p[0]; x.save(); x.shadowColor = el.options.backgroundColor; x.shadowBlur = 16; d(...p); x.restore(); };
+  });
+} });
+Chart.defaults.color = "#A8B0C0";
+Chart.defaults.font.family = "Sora, system-ui, sans-serif";
+Chart.defaults.borderColor = "#2C2C31";
+/* Se modifican las propiedades (no se reemplaza el objeto) para no romper la animación de colores de Chart.js */
+if (RM) Chart.defaults.animation.duration = 0;
+else {
+  const an = Chart.defaults.animation;
+  an.duration = 1400; an.easing = "easeOutQuart";
+  an.delay = c => c.type === "data" && c.mode === "default" ? c.dataIndex * 110 : 0;
+}
+
+/* ===== Utilidades ===== */
+function h(tag, cls, txt) { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+const clean = v => String(v ?? "").trim();
+const strip = v => clean(v).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ");
+const norm = v => strip(v).replace(/[.!\s]+$/, "");
+const isNo = v => CONFIG.NO_REGEX.test(norm(v));
+function count(vals) { const m = new Map(); vals.forEach(v => m.set(v, (m.get(v) || 0) + 1)); return [...m.entries()].sort((a, b) => b[1] - a[1]); }
+function uniOf(v) {
+  const t = strip(v);
+  if (/unifranz|franz|tamayo/.test(t)) return "UNIFRANZ";
+  if (/upea|el alto/.test(t)) return "UPEA";
+  if (/umsa|san andres/.test(t)) return "UMSA";
+  return "OTROS";
+}
+function toRows(json) {
+  let d = json;
+  if (!Array.isArray(d)) d = (d && (d.data || d.respuestas || d.rows || d.values)) || Object.values(d || {}).find(Array.isArray) || [];
+  if (d.length && Array.isArray(d[0])) { const head = d[0].map(String); d = d.slice(1).map(r => Object.fromEntries(head.map((k, i) => [k, r[i]]))); }
+  return d.filter(r => r && Object.values(r).some(v => clean(v) !== ""));
+}
+function countUp(el, to, dec = 0, suf = "") {
+  if (to == null) { el.textContent = "—"; return; }
+  if (RM) { el.textContent = to.toFixed(dec) + suf; return; }
+  const t0 = performance.now(), dur = 1000;
+  (function f(t) {
+    const p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3), v = to * e;
+    el.textContent = (dec ? v.toFixed(dec) : nf.format(Math.round(v))) + suf;
+    if (p < 1) requestAnimationFrame(f);
+  })(t0);
+}
+
+/* ===== Estadísticas por universidad ===== */
+const metaOf = k => { const p = CONFIG.UNIS[k].poblacion; return p ? Math.ceil(p * CONFIG.MUESTRA_PCT) : null; };
+function statsOf(k) {
+  const by = S.by, T = ["UMSA", "UPEA", "UNIFRANZ"];
+  if (k === "TODAS") return { pob: T.reduce((a, x) => a + CONFIG.UNIS[x].poblacion, 0), meta: T.reduce((a, x) => a + metaOf(x), 0), enc: S.all.length, cnt: T.reduce((a, x) => a + (by[x] || 0), 0) };
+  return { pob: CONFIG.UNIS[k].poblacion || null, meta: metaOf(k), enc: by[k] || 0, cnt: by[k] || 0 };
+}
+
+function renderTabs() {
+  const box = $("#tabs"); box.replaceChildren();
+  Object.keys(CONFIG.UNIS).forEach(k => {
+    const u = CONFIG.UNIS[k], st = statsOf(k);
+    const b = h("button", "tab" + (k === S.sel ? " on" : "")); b.type = "button";
+    b.style.setProperty("--c", u.color); b.setAttribute("aria-pressed", k === S.sel);
+    b.append(h("b", null, u.nombre),
+      h("span", null, st.meta ? st.enc + " de " + st.meta + " encuestas" : st.enc + " encuestas"),
+      h("span", null, st.pob ? "Población " + nf.format(st.pob) : "Sin meta fija"));
+    b.onclick = () => { S.sel = k; renderTabs(); renderInfo(); renderQs(); };
+    box.append(b);
+  });
+}
+
+function renderInfo() {
+  const k = S.sel, u = CONFIG.UNIS[k], st = statsOf(k), box = $("#info");
+  document.documentElement.style.setProperty("--c", u.color);
+  box.replaceChildren(h("h3", null, u.completo), h("p", "mut", u.carrera));
+  const avance = st.meta ? Math.min(100, st.cnt / st.meta * 100) : null;
+  let txt;
+  if (st.pob) txt = "Ingresan ≈ " + nf.format(st.pob) + " estudiantes por año. Con el " + Math.round(CONFIG.MUESTRA_PCT * 100) + "% la muestra objetivo es de " + st.meta +
+    ". Hay " + st.cnt + " encuestados: " + (st.cnt / st.pob * 100).toFixed(1) + "% de la población y " + avance.toFixed(1) + "% de la meta." +
+    (k === "TODAS" ? " Además hay " + (S.by.OTROS || 0) + " de otras universidades." : "");
+  else txt = "Encuestados de otras universidades: " + st.enc + ". No tienen población ni meta de referencia.";
+  box.append(h("p", null, txt));
+  if (u.semestres) {
+    const c = h("div", "chips");
+    u.semestres.forEach(s => { const x = h("span", "chip"); x.append(h("b", null, nf.format(s[1])), document.createTextNode(" " + s[0] + (s[2] ? " (estimado)" : ""))); c.append(x); });
+    const t = h("span", "chip"); t.append(h("b", null, nf.format(u.poblacion)), document.createTextNode(" total anual")); c.append(t);
+    box.append(c, h("p", "mut", u.fuente)); box.lastChild.style.marginTop = "10px";
+  }
+  countUp($("#k-pob"), st.pob);
+  countUp($("#k-meta"), st.meta);
+  $("#k-meta-l").textContent = "Muestra objetivo (" + Math.round(CONFIG.MUESTRA_PCT * 100) + "%)";
+  countUp($("#k-enc"), st.enc);
+  countUp($("#k-pct"), avance, 1, "%");
+  const bar = $("#k-bar"); bar.style.width = "0";
+  requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = (avance || 0) + "%"; }));
+}
+
+/* ===== Gráficos ===== */
+const pending = [];
+function lazy(canvas, mk) { pending.push(() => { try { charts.push(mk()); } catch (e) { console.error(e); } }); }
+
+function doughnut(canvas, lg, entries, colors) {
+  const total = entries.reduce((a, e) => a + e[1], 0) || 1;
+  lazy(canvas, () => new Chart(canvas, {
+    type: "doughnut",
+    data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: colors, borderColor: "#1E1E1E", borderWidth: 3 }] },
+    options: { maintainAspectRatio: false, cutout: "62%", plugins: { legend: { display: false },
+      tooltip: { callbacks: { label: c => ` ${c.label}: ${c.raw} (${(c.raw / total * 100).toFixed(1)}%)` } } } }
+  }));
+  entries.forEach((e, i) => {
+    const li = h("li"), d = h("i"); d.style.background = d.style.color = colors[i];
+    li.append(d, h("span", null, e[0]), h("em", null, e[1] + " · " + (e[1] / total * 100).toFixed(1) + "%")); lg.append(li);
+  });
+}
+
+function closedCard(col, num, rows) {
+  const entries = count(rows.map(r => clean(r[col])).filter(Boolean));
+  const total = entries.reduce((a, e) => a + e[1], 0) || 1;
+  const card = h("section", "card"), cv = h("div", "cv"), canvas = document.createElement("canvas");
+  card.append(h("h3", null, num)); cv.append(canvas); card.append(cv);
+  if (entries.length <= 4) { const lg = h("ul", "legend"); card.append(lg); doughnut(canvas, lg, entries, PAL); }
+  else {
+    cv.style.height = Math.max(230, entries.length * 34 + 40) + "px";
+    const short = s => s.length > 38 ? s.slice(0, 36) + "…" : s;
+    lazy(canvas, () => new Chart(canvas, {
+      type: "bar",
+      data: { labels: entries.map(e => short(e[0]) + " (" + (e[1] / total * 100).toFixed(0) + "%)"),
+        datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map((_, i) => PAL[i % PAL.length]), borderRadius: 6 }] },
+      options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false },
+        tooltip: { callbacks: { title: c => entries[c[0].dataIndex][0], label: c => ` ${c.raw} respuestas (${(c.raw / total * 100).toFixed(1)}%)` } } },
+        scales: { x: { ticks: { precision: 0 }, grid: { color: "#26262B" } }, y: { grid: { display: false } } } }
+    }));
+  }
+  return card;
+}
+
+function semiCard(col, num, rows) {
+  const yes = []; let no = 0;
+  rows.forEach(r => { const t = clean(r[col]); isNo(t) ? no++ : yes.push(t); });
+  const card = h("section", "card wide"), split = h("div", "split"), left = h("div"), right = h("div");
+  const cv = h("div", "cv"), canvas = document.createElement("canvas"), lg = h("ul", "legend");
+  card.append(h("h3", null, num));
+  cv.append(canvas); left.append(cv, lg);
+  doughnut(canvas, lg, [["Sí", yes.length], ["No", no]], ["#39FF88", "#B65CFF"]);
+  right.append(h("p", "mut", "Comentarios de quienes respondieron Sí (" + yes.length + ")"));
+  const sc = h("div", "scroll"); sc.tabIndex = 0;
+  if (yes.length) yes.forEach(t => sc.append(h("div", "note", t))); else sc.append(h("p", "mut", "Aún no hay comentarios."));
+  right.append(sc); split.append(left, right); card.append(split);
+  return card;
+}
+
+function openCard(col, num, rows) {
+  const texts = rows.map(r => clean(r[col])).filter(Boolean);
+  const card = h("section", "card"), sc = h("div", "scroll"); sc.tabIndex = 0;
+  card.append(h("h3", null, num), h("p", "mut", texts.length + " respuestas abiertas"));
+  texts.slice(0, 300).forEach(t => sc.append(h("div", "note", t)));
+  card.append(sc); return card;
+}
+
+const label = (c, i) => { const m = c.match(/^\s*(\d+)\s*[.)\-:]\s*(.*)$/); return m ? m[1] + ". " + m[2] : c; };
+function renderQs() {
+  charts.forEach(c => c.destroy()); charts = []; pending.length = 0;
+  const box = $("#qs"); box.replaceChildren();
+  const rows = S.sel === "TODAS" ? S.all : S.all.filter(r => uniOf(r[S.uniCol]) === S.sel);
+  $("#qh").textContent = "Resultados por pregunta · " + CONFIG.UNIS[S.sel].nombre + " (" + rows.length + " encuestas)";
+  if (!rows.length) { box.append(h("p", "mut", "Aún no hay encuestas para esta selección.")); return; }
+  S.qCols.forEach((c, i) => {
+    if (c === S.uniCol && S.sel !== "TODAS") return;
+    const vals = rows.map(r => clean(r[c])).filter(Boolean);
+    if (!vals.length) return;
+    const lb = label(c, i);
+    if (c === S.q11 || c === S.q15) return box.append(semiCard(c, lb, rows));
+    const closed = new Set(vals).size <= CONFIG.MAX_OPCIONES && vals.every(v => v.length <= 70);
+    box.append(closed ? closedCard(c, lb, rows) : openCard(c, lb, rows));
+  });
+  requestAnimationFrame(() => pending.splice(0).forEach(f => f()));
+}
+
+/* ===== Carga de datos ===== */
+function prepare(rows) {
+  const cols = [...new Set(rows.flatMap(r => Object.keys(r)))];
+  S.all = rows;
+  S.qCols = cols.filter(c => !CONFIG.META_REGEX.test(c));
+  S.q11 = S.qCols.find(c => /docentes/i.test(c) && /(permit|incentiv)/i.test(c)) || S.qCols.find(c => /^\s*11\s*[.)\-:]/.test(c)) || S.qCols[10];
+  S.q15 = S.qCols.find(c => /recomend/i.test(c)) || S.qCols.find(c => /^\s*15\s*[.)\-:]/.test(c)) || S.qCols[14];
+  const isUni = v => /umsa|upea|unifranz|franz|san andres|el alto/.test(strip(v));
+  S.uniCol = S.qCols.find(c => /universidad/i.test(c)) ||
+    S.qCols.find(c => { const v = rows.map(r => clean(r[c])).filter(Boolean); return v.length && v.filter(isUni).length / v.length > .6; }) || null;
+  S.by = {};
+  if (S.uniCol) rows.forEach(r => { const k = uniOf(r[S.uniCol]); S.by[k] = (S.by[k] || 0) + 1; });
+}
+
+async function load() {
+  const btn = $("#refresh"), st = $("#status"), err = $("#error");
+  btn.disabled = true; st.textContent = "Actualizando…"; err.hidden = true; $("#loader").hidden = false;
+  try {
+    const res = await fetch(CONFIG.API_URL + (CONFIG.API_URL.includes("?") ? "&" : "?") + "t=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("La API respondió con el código " + res.status);
+    prepare(toRows(await res.json()));
+    if (!S.uniCol) { err.textContent = "No se encontró la columna de universidad; solo funciona la vista \"Todas\"."; err.hidden = false; S.sel = "TODAS"; }
+    renderTabs(); renderInfo(); renderQs();
+    st.textContent = "Actualizado a las " + new Date().toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  } catch (e) {
+    err.textContent = "No se pudieron cargar los datos: " + e.message + ". Revisa que el script esté publicado para \"Cualquier persona\" y pulsa Actualizar datos.";
+    err.hidden = false; st.textContent = "Error al actualizar";
+  } finally { btn.disabled = false; $("#loader").hidden = true; }
+}
+
+/* ===== Galería ===== */
+function renderGallery() {
+  const g = $("#gallery");
+  CONFIG.MEDIA.forEach(m => {
+    const f = h("figure"); let el;
+    if (m.tipo === "video") { el = document.createElement("video"); el.src = m.src; el.controls = true; el.preload = "metadata"; el.playsInline = true; f.append(el); }
+    else {
+      el = document.createElement("img"); el.src = m.src; el.alt = m.titulo || "Evidencia de campo"; el.loading = "lazy";
+      if (m.pos) el.style.objectPosition = m.pos;
+      const a = document.createElement("a"); a.href = m.src; a.target = "_blank"; a.rel = "noopener"; a.append(el); f.append(a);
+    }
+    if (m.titulo) f.append(h("figcaption", null, m.titulo));
+    g.append(f);
+  });
+}
+
+$("#refresh").addEventListener("click", load);
+renderGallery();
+load();
+</script>
+</body>
+</html>
